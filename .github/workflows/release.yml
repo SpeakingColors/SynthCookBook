@@ -20,13 +20,13 @@ jobs:
           TAGIN: ${{ github.event.inputs.tag }}
         run: |
           tag="${TAGIN:-$GITHUB_REF_NAME}"; [ "$GITHUB_REF_TYPE" = "tag" ] || tag="${TAGIN:-dev}"
-          d="out/CatPro1-$tag"; mkdir -p "$d/patches"
-          cp docs/recipe-book.html "$d/CatPro1-RecipeBook.html"
-          python3 tools/build_offline.py "$d/CatPro1-PatchBook.html"
-          python3 tools/make_manual.py x docs/manual.txt "$d/CatPro1-manual.pdf"
+          d="out/SynthCookBook-$tag"; mkdir -p "$d/patches"
+          cp docs/recipe-book.html "$d/SynthCookBook-RecipeBook.html"
+          python3 tools/build_offline.py "$d/SynthCookBook-PatchBook.html"
+          python3 tools/make_manual.py x docs/manual.txt "$d/SynthCookBook-manual.pdf"
           cp docs/patches/*.json "$d/patches/"; cp docs/PATCH-FORMAT.md docs/SHARING.md LICENSE packaging/INSTALL.txt "$d/"
           (cd "$d" && find . -type f | sort | xargs sha256sum > SHA256SUMS)
-          (cd out && zip -r "CatPro1-$tag.zip" "CatPro1-$tag")
+          (cd out && zip -r "SynthCookBook-$tag.zip" "SynthCookBook-$tag")
           echo "TAG=$tag" >> "$GITHUB_ENV"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with: { name: release-zip, path: "out/*.zip" }
@@ -35,6 +35,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          f="out/CatPro1-$TAG.zip"
+          f="out/SynthCookBook-$TAG.zip"
           if gh release view "$TAG" >/dev/null 2>&1; then gh release upload "$TAG" "$f" --clobber
-          else gh release create "$TAG" "$f" --target "$GITHUB_SHA" --prerelease --title "Cat Pro-1 patch book $TAG" --notes "Offline recipe book for the Behringer Pro-1 (plus CAT, TD-3-MO and TD-3 panels): unzip and open CatPro1-RecipeBook.html. Includes the manual, the patch format and the patches as JSON. Works offline, collects nothing."; fi
+          else gh release create "$TAG" "$f" --target "$GITHUB_SHA" --prerelease --title "Synth Cook Book $TAG" --notes "Offline recipe book for the Behringer Pro-1 (plus CAT, TD-3-MO and TD-3 panels): unzip and open SynthCookBook-RecipeBook.html. Includes the manual, the patch format and the patches as JSON. Works offline."; fi

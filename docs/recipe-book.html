@@ -1,5 +1,5 @@
 <!doctype html><html data-synth="pro1"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>Cat Recipe Book (Studio 87)</title>
+<title>Synth Cook Book (Studio 87)</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: top bar (synth picker, name, save/export), optional recipe shelf on the left, the synth panel drawn at the hardware's own proportions and scaled to fit, notes and cables below. */
@@ -202,7 +202,7 @@ textarea { width: 100%; min-height: 56px; resize: vertical; background: var(--ca
 </style>
 
 <div class="top">
-  <div class="brand">Cat Recipe Book<small>patch recipes for synths without patch memory</small></div>
+  <div class="brand">Synth Cook Book<small>patch recipes for synths without patch memory</small></div>
   <div class="field"><label for="synthSel">Synth</label><select id="synthSel"></select></div>
   <div class="field"><label for="presetName">Recipe name</label><input id="presetName" maxlength="20" autocomplete="off"></div>
   <span class="chip" id="dirtyChip">saved</span>
@@ -265,7 +265,7 @@ textarea { width: 100%; min-height: 56px; resize: vertical; background: var(--ca
     </div>
   </section>
 </div>
-<p class="note" style="margin-top:14px">Studio 87 · Cat Recipe Book · free and open source (AGPL-3.0-or-later) · everything stays in this browser, nothing is sent anywhere. Not affiliated with or endorsed by Behringer.</p>
+<p class="note" style="margin-top:14px">Studio 87 · Synth Cook Book · AGPL-3.0-or-later. Not affiliated with or endorsed by Behringer.</p>
 
 <script>
 (function () {
@@ -877,7 +877,7 @@ function showText(text, name) {
 }
 function importText(text) {
   let d; try { d = JSON.parse(text); } catch (e) { toast("That file is not valid JSON.", true); return; }
-  if (!d || d.format !== "cat-recipe-book" || !Array.isArray(d.presets)) { toast("Not a Cat Recipe Book file.", true); return; }
+  if (!d || d.format !== "cat-recipe-book" || !Array.isArray(d.presets)) { toast("Not a Synth Cook Book file.", true); return; }
   let n = 0;
   d.presets.forEach(p => {
     if (!p || typeof p.name !== "string" || !SYNTHS.some(s => s.id === p.synth) || typeof p.values !== "object" || !p.values) return;
@@ -911,8 +911,8 @@ $("#notes").oninput = e => { cur.notes = e.target.value; refreshMeta(); };
 $("#saveBtn").onclick = () => save(false); $("#saveCopyBtn").onclick = () => save(true);
 $("#newBtn").onclick = () => setCurrent(blank(db.settings.synth), true); $("#delBtn").onclick = del;
 const fname = s => s.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-") || "recipe";
-$("#exportBtn").onclick = () => { cur.name = $("#presetName").value.trim() || cur.name; saveFile(payload([cur]), fname(cur.name) + ".catrecipe.json", "application/json", "Cat Recipe Book file"); };
-$("#exportAllBtn").onclick = () => saveFile(payload(db.presets), "cat-recipe-book-all.catrecipe.json", "application/json", "Cat Recipe Book file");
+$("#exportBtn").onclick = () => { cur.name = $("#presetName").value.trim() || cur.name; saveFile(payload([cur]), fname(cur.name) + ".catrecipe.json", "application/json", "Synth Cook Book file"); };
+$("#exportAllBtn").onclick = () => saveFile(payload(db.presets), "cat-recipe-book-all.catrecipe.json", "application/json", "Synth Cook Book file");
 $("#importBtn").onclick = () => $("#fileIn").click();
 $("#fileIn").onchange = e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => importText(String(r.result)); r.readAsText(f); e.target.value = ""; };
 document.addEventListener("dragover", e => e.preventDefault());

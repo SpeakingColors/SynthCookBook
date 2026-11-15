@@ -1,6 +1,6 @@
 # Sharing patches
 
-The patch book site lives in `docs/` and is served by GitHub Pages (once Pages is switched on, see below). It is static: no server, no accounts of our own.
+The patch book site lives in `docs/` and is served by GitHub Pages (once Pages is switched on, see below). It is static.
 
 ## For players
 - Open the site, pick a patch from the list, set your Pro-1 knobs to match the on-screen panel.
@@ -17,7 +17,7 @@ Only submit your own patches. Do not paste patches copied from commercial books,
 
 ## Switching on GitHub Pages (one time, by the repo owner)
 - Repo Settings, Pages, Source: "Deploy from a branch", branch `main`, folder `/docs`, Save.
-- The site then appears at `https://speakingcolors.github.io/catpro1/`.
+- The site then appears at `https://speakingcolors.github.io/synthcookbook/`.
 
 ## Later ideas
 - A GitHub Action that checks every submitted patch against the format and rebuilds `index.json`.

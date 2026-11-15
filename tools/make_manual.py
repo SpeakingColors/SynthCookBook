@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds the PDF manual of Cat Pro-1 patch book from docs/manual.txt (sections start with '# ', bullets with '- ').
+"""Builds the PDF manual of Synth Cook Book from docs/manual.txt (sections start with '# ', bullets with '- ').
 Usage: python3 tools/make_manual.py <ignored> <docs/manual.txt> <out.pdf>      Needs: pip install reportlab"""
 import sys, re
 from reportlab.lib import colors
@@ -13,7 +13,7 @@ h1 = ParagraphStyle('h1', fontName='Helvetica-Bold', fontSize=22, textColor=colo
 h2 = ParagraphStyle('h2', fontName='Helvetica-Bold', fontSize=13, textColor=colors.HexColor('#7900E3'), spaceBefore=12, spaceAfter=4)
 body = ParagraphStyle('b', fontName='Helvetica', fontSize=10, leading=13.5, spaceAfter=4)
 esc = lambda s: s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-story = [Paragraph('Cat Pro-1 patch book', h1), Paragraph('Studio 87. Free and open source (AGPL-3.0-or-later; patches CC0 or CC-BY, see each file).', body)]
+story = [Paragraph('Synth Cook Book', h1), Paragraph('Studio 87. Free and open source (AGPL-3.0-or-later; patches CC0 or CC-BY, see each file).', body)]
 sections, cur = [], None
 for line in open(txt, encoding='utf-8').read().splitlines():
     if line.startswith('# '): cur = (line[2:].strip(), []); sections.append(cur)
@@ -31,4 +31,4 @@ for title, lines in sections:
         elif not l.strip(): flush_para(); flush_items()
         else: flush_items(); para.append(l.strip())
     flush_para(); flush_items()
-SimpleDocTemplate(out, pagesize=A4, leftMargin=18*mm, rightMargin=18*mm, topMargin=16*mm, bottomMargin=16*mm, title='Cat Pro-1 patch book manual').build(story)
+SimpleDocTemplate(out, pagesize=A4, leftMargin=18*mm, rightMargin=18*mm, topMargin=16*mm, bottomMargin=16*mm, title='Synth Cook Book manual').build(story)

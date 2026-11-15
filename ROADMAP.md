@@ -5,7 +5,7 @@
 - [ ] Enable GitHub Pages (owner: Settings, Pages, /docs)
 - [ ] Check panel scale of glide and LFO knobs on hardware
 - [ ] GitHub Action to validate submitted patches and rebuild index.json
-- [x] Panel artwork at the real front panel proportions (docs/recipe-book.html, the Cat Recipe Book)
+- [x] Panel artwork at the real front panel proportions (docs/recipe-book.html, the Synth Cook Book)
 - [ ] Sequencer note data in the format (v2)
 - [ ] Same book for the Behringer Cat
 - [x] Recall sheet view (Patch sheet in the recipe book)

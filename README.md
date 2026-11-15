@@ -1,15 +1,15 @@
-# Cat Pro-1 🐈
+# Synth Cook Book 🐈
 
 <p align="center"><a href="https://ko-fi.com/studio87"><img src="https://raw.githubusercontent.com/SpeakingColors/.github/main/assets/kofi-banner.svg" alt="Support Studio 87 on Ko-fi" width="440"></a></p>
 
 <img src="assets/icon.svg" width="96" align="right" alt="icon">
 
-Patch book and global-settings tool for the Behringer Pro-1 on Linux.
+Preset cookbook (recipe book) for Behringer synths: Pro-1, CAT, TD-3-MO and TD-3. Works on Linux, macOS and Windows.
 
-<p align="center"><img src="docs/screenshot.png" alt="Cat Pro-1 recipe book" width="900"></p>
+<p align="center"><img src="docs/screenshot.png" alt="Synth Cook Book" width="900"></p>
 
 ## Status
-Usable: the Cat Recipe Book (`docs/recipe-book.html`) draws the front panels of the Behringer Pro-1, CAT, TD-3-MO and TD-3 (pick one in the Synth menu) and stores your recipes in the browser; the release zip has it as an offline file with a short manual. No plugin build yet.
+Usable: the Synth Cook Book (`docs/recipe-book.html`) draws the front panels of the Behringer Pro-1, CAT, TD-3-MO and TD-3 (pick one in the Synth menu) and stores your recipes in the browser; the release zip has it as an offline file with a short manual. No plugin build yet.
 
 <p align="center">
   <a href="https://ko-fi.com/studio87"><img src="https://img.shields.io/badge/Support_Studio_87-on_Ko--fi-FF5E5B?style=for-the-badge&logo=kofi&logoColor=white" alt="Support Studio 87 on Ko-fi"></a>
@@ -23,7 +23,7 @@ Usable: the Cat Recipe Book (`docs/recipe-book.html`) draws the front panels of 
 - [Roadmap](ROADMAP.md)
 
 ## Patch book site
-Browse and share Pro-1 patches in the browser: `docs/index.html` (GitHub Pages from `/docs`). Format: [docs/PATCH-FORMAT.md](docs/PATCH-FORMAT.md). How to share and switch Pages on: [docs/SHARING.md](docs/SHARING.md).
+Browse and share patches in the browser: `docs/index.html` (GitHub Pages from `/docs`). Format: [docs/PATCH-FORMAT.md](docs/PATCH-FORMAT.md). How to share and switch Pages on: [docs/SHARING.md](docs/SHARING.md).
 
 ## License
 AGPL-3.0-or-later, see [LICENSE](LICENSE).

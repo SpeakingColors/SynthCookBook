@@ -15,7 +15,7 @@ It does accept **global settings** through SysEx, and these cannot be read back 
 - Pitch bend range (panel default 0x0C, i.e. 12 semitones)
 - MIDI clock output (on or off)
 
-So a "controller" plugin that moves the Pro-1's knobs is not possible. Cat Pro-1 is therefore planned as a **patch book**: record the knob positions of a patch (manually or via the on-screen panel), store them with notes, name, category and cable routing, and show them back as a recall sheet. It can also send the global settings and play notes and clock.
+So a "controller" plugin that moves the Pro-1's knobs is not possible. The Synth Cook Book is therefore a as a **patch book**: record the knob positions of a patch (manually or via the on-screen panel), store them with notes, name, category and cable routing, and show them back as a recall sheet. It can also send the global settings and play notes and clock.
 
 ## Confirmed from the Quick Start Guide
 
