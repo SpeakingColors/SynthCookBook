@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Synth Cook Book</title>
+<style>
+:root{--bg:#161638;--panel:#1c1c4a;--ink:#f2f2fa;--dim:#a8a8cc;--teal:#02EBBA;--pink:#FF1383;--amber:#FFA600;--line:#33336b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,sans-serif}
+main{max-width:980px;margin:0 auto;padding:20px 16px 40px}
+h1{margin:.2em 0;font-size:1.8rem}h2{color:var(--teal);font-size:1rem;letter-spacing:.1em;text-transform:uppercase;margin:1.6em 0 .5em}
+a{color:var(--pink)}img{max-width:100%;height:auto;border-radius:8px;border:1px solid var(--line)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px}.card b{color:var(--teal)}
+.note{color:var(--dim);font-size:.9rem}
+</style></head><body><main>
+<h1>Synth Cook Book</h1>
+<p>Patch recipes for synths without patch memory: Behringer Pro-1, CAT, TD-3-MO and TD-3. Free and open source (AGPL-3.0-or-later).</p>
+<img src="screenshot.png" alt="Synth Cook Book window showing the Pro-1 panel with the recipe Fat Dirty Bass">
+<p class="note">Screenshot of the recipe book page (docs/recipe-book.html) in a browser.</p>
+<h2>Status</h2>
+<div class="cards">
+<div class="card"><b>Usable</b><br>The recipe book draws the four front panels and stores your recipes in the browser. No plugin build yet.</div>
+<div class="card"><b>Values from photos</b><br>Some knob values were read from a photo: a dashed ring is an estimate (about plus or minus 1), a yellow ? is low confidence. Moving a control marks it as confirmed.</div>
+<div class="card"><b>Network</b><br>The page links Google Fonts for its typeface, its only network request. Offline, a fallback font is used and everything else works.</div>
+</div>
+<h2>Open</h2>
+<ul>
+<li><a href="recipe-book.html">Recipe book</a> (the app shown above)</li>
+<li><a href="index.html">Pro-1 patch book</a> (the older page for browsing and sharing patches)</li>
+<li><a href="https://github.com/SpeakingColors/SynthCookBook/releases">Releases</a>: zip with the offline file and a PDF manual that includes an interface tour</li>
+<li><a href="https://github.com/SpeakingColors/SynthCookBook">Source</a></li>
+</ul>
+<p class="note">Not affiliated with or endorsed by Behringer.</p>
+</main></body></html>

@@ -23,6 +23,14 @@ Synth Cook Book is a preset cookbook for Behringer synths (Pro-1, CAT, TD-3-MO a
 - Note the modulation routes (wheel or direct) and any patch cables in the Notes field; they change the sound as much as the knobs.
 - Keep your own patches in a folder next to the book, and back them up: they are plain text and small.
 
+# Under the hood
+- The recipe book is one HTML file. Recipes saved with Save live in the browser's own storage (localStorage); if the browser blocks storage, the page says so and recipes last only for the session. Export file, Import and Export all move them as .json files.
+- Knob ranges in the tour tables were read from the page itself (each knob's minimum and maximum).
+- A dashed ring on a knob means a value read from a photo (about plus or minus 1); a yellow question mark means low confidence; a dim control is still unset. Moving a control marks it as confirmed.
+- The panel is drawn at the real front panel proportions and scales to the window (Fit width, 100%, or the slider).
+- The page links Google Fonts for its typeface: it is the only network request in the file. Without a connection the browser shows a fallback font and everything else keeps working.
+- The scope on the older Patch Book page is only a rough picture of the oscillator mix, not a model of the real synth.
+
 # Install
 - Nothing to install. Unzip anywhere and open the HTML file. To remove it, delete the folder.
 - Windows, macOS and Linux all work; the page needs no internet connection.
