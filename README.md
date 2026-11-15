@@ -9,7 +9,7 @@ Patch book and global-settings tool for the Behringer Pro-1 on Linux.
 <p align="center"><img src="docs/screenshot.png" alt="Cat Pro-1 recipe book" width="900"></p>
 
 ## Status
-Usable: the Cat Recipe Book (`docs/recipe-book.html`) draws the Pro-1 front panel and stores your recipes in the browser; the release zip has it as an offline file with a short manual. No plugin build yet.
+Usable: the Cat Recipe Book (`docs/recipe-book.html`) draws the front panels of the Behringer Pro-1, CAT, TD-3-MO and TD-3 (pick one in the Synth menu) and stores your recipes in the browser; the release zip has it as an offline file with a short manual. No plugin build yet.
 
 <p align="center">
   <a href="https://ko-fi.com/studio87"><img src="https://img.shields.io/badge/Support_Studio_87-on_Ko--fi-FF5E5B?style=for-the-badge&logo=kofi&logoColor=white" alt="Support Studio 87 on Ko-fi"></a>
@@ -19,6 +19,7 @@ Usable: the Cat Recipe Book (`docs/recipe-book.html`) draws the Pro-1 front pane
 
 ## Docs
 - [Device notes](docs/DEVICE-NOTES.md): what is confirmed from manuals, and what is still missing.
+- [TD-3-MO notes](docs/TD-3-MO-NOTES.md): what the guide confirms; only CC 74 (cutoff) is known, so there is no TD-3-MO controller plugin.
 - [Roadmap](ROADMAP.md)
 
 ## Patch book site
