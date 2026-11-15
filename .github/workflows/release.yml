@@ -37,4 +37,4 @@ jobs:
         run: |
           f="out/SynthCookBook-$TAG.zip"
           if gh release view "$TAG" >/dev/null 2>&1; then gh release upload "$TAG" "$f" --clobber
-          else gh release create "$TAG" "$f" --target "$GITHUB_SHA" --prerelease --title "Synth Cook Book $TAG" --notes "Offline recipe book for the Behringer Pro-1 (plus CAT, TD-3-MO and TD-3 panels): unzip and open SynthCookBook-RecipeBook.html. Includes the manual, the patch format and the patches as JSON. Works offline."; fi
+          else gh release create "$TAG" "$f" --target "$GITHUB_SHA" --prerelease --title "Synth Cook Book $TAG" --notes "Offline recipe book for 14 hardware synths without patch memory (Behringer, Moog, Arturia, Korg): unzip and open SynthCookBook-RecipeBook.html. Includes the manual, the patch format and the patches as JSON. Works offline."; fi

@@ -1,12 +1,13 @@
 # Intro
-Synth Cook Book is a preset cookbook for Behringer synths (Pro-1, CAT, TD-3-MO and TD-3). The Pro-1 cannot load or save sounds over MIDI, so a patch here is a recipe: a picture of the front panel with every knob and switch value, which you set by hand on the synth. The book runs in your web browser.
+Synth Cook Book is a preset cookbook for hardware synths without patch memory: Behringer Pro-1, CAT, TD-3-MO, TD-3, MODEL D and POLY D; Moog Mother-32, DFAM, Subharmonicon, Grandmother and Minimoog Model D; Arturia MicroBrute; Korg volca bass and volca keys. The Pro-1 cannot load or save sounds over MIDI, so a patch here is a recipe: a picture of the front panel with every knob and switch value, which you set by hand on the synth. The book runs in your web browser.
 
 # Quick start
 - Unzip the download and open SynthCookBook-RecipeBook.html in a browser (Firefox, Chrome, Edge, Safari). It draws the Pro-1 front panel at its real proportions: knobs, switches, patch jacks and wood cheeks.
 - Pick a recipe from the Recipes shelf. Set your Pro-1 to match the panel on screen. Dashed rings and yellow question marks mark values that were read from a photo and are estimates.
 - Drag a knob up or down, click a switch lever, drag the panel size slider or press Fit width. Open Recipe info, Patch cables and Patch sheet below the panel; Copy as text gives a plain recall sheet.
 - Save keeps the recipe in the browser's own storage; Export file saves a .json file anywhere (a cloud folder works). Import loads files back. Export all saves every recipe of every synth in one file.
-- The book also has panels for the Behringer CAT, TD-3-MO and TD-3 (pick them in the Synth menu). The TD-3 panels include a 16 step piano roll for the pattern.
+- The book also has panels for the other 13 synths (pick them in the Synth menu). The TD-3 panels include a 16 step piano roll for the pattern. The Pro-1, CAT, TD-3-MO and TD-3 panels are drawn from photos. The other ten are drawn from each manual's control list: sections and order follow the manual, not the exact hardware positions. Selectors with more than three positions are stepped dials. A small note under each of those panels says what the manual leaves unclear.
+- Patch cable lists exist for the Behringer, Moog and Arturia synths that have a patchbay or mod matrix; the volca synths have none.
 - SynthCookBook-PatchBook.html is the older, simpler page with the same patch format; it stays in the zip for people who shared patches with it.
 - Drag a knob up or down to change its value. Double click a knob to put it back to the Init value.
 - Type a name, author, category and notes, then press Export JSON to save your own patch as a file, or Copy JSON to paste it somewhere.

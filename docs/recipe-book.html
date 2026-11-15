@@ -229,6 +229,7 @@ textarea { width: 100%; min-height: 56px; resize: vertical; background: var(--ca
 
   <section class="stage" id="stage">
     <div class="estbar" id="estBar" hidden></div>
+    <p class="note" id="synNote" hidden></p>
     <div class="viewport" id="viewport"><div class="sizer" id="sizer"><div class="canvas" id="canvas"></div></div></div>
     <div class="drawers" id="below">
     <div class="sizebar" id="sizebar">
@@ -265,7 +266,7 @@ textarea { width: 100%; min-height: 56px; resize: vertical; background: var(--ca
     </div>
   </section>
 </div>
-<p class="note" style="margin-top:14px">Studio 87 · Synth Cook Book · AGPL-3.0-or-later. Not affiliated with or endorsed by Behringer.</p>
+<p class="note" style="margin-top:14px">Studio 87 · Synth Cook Book · AGPL-3.0-or-later. Not affiliated with or endorsed by Behringer, Moog Music, Arturia or Korg. All product names belong to their owners and are used only to say which synth a recipe is for.</p>
 
 <script>
 (function () {
@@ -532,7 +533,360 @@ const TD3 = {
   syn.boxes.forEach(b => { b.x += XO; b.y += DY; }); syn.ctrls.forEach(c => { c.cx += XO; c.cy += DY; }); syn.statics.forEach(t => { t.x += XO; t.y += DY; });
   syn.W += 2 * XO; syn.wood = XO; syn.H = Math.round(noteY + DY + 46);
   syn.statics.forEach(t => { if (t.k === "rect" && t.y + t.h > syn.H) t.h = syn.H - t.y; }); }); })();
-const SYNTHS = [PRO1, CAT, TD3MO, TD3];
+/* ---------- Synths added from the manuals (Nov 2026). Not copied from photos: sections and order follow each manual's control list, laid out on a simple grid. ---------- */
+const sg = v => (v > 0 ? "+" : "") + (Math.round(v * 10) / 10).toFixed(1);
+function gHelp(nums) {
+  const rg = (min, max) => { const t = []; for (let i = Math.ceil(min); i <= max; i++) t.push(i); return t; };
+  const base = (id, label, tip, o) => knob(id, label, "", 0, 0, Object.assign({ nums, tip: tip || label }, o || {}));
+  return {
+    k: base,
+    b: (id, label, tip, o) => base(id, label, tip, Object.assign({ min: -5, max: 5, def: 0, ticks: rg(-5, 5), nums: true, fmt: sg }, o || {})),
+    r: (id, label, min, max, tip, o) => base(id, label, tip, Object.assign({ min, max, def: 0, ticks: rg(min, max).filter(t => max - min <= 10 || t === 0 || Math.abs(t) % 2 === 1), nums: true, fmt: sg }, o || {})),
+    p: (id, label, labels, tip, o) => base(id, label, tip, Object.assign({ min: 0, max: labels.length - 1, def: 0, step: 1, ticks: rg(0, labels.length - 1), nums: false, fmt: v => plain(labels[Math.round(v)]) }, o || {})),
+    s: (id, label, pos, tip, o) => sw(id, label, "", 0, 0, pos, Object.assign({ tip: tip || label }, o || {})),
+    l: (id, label, tip, o) => sld(id, label, "", 0, 0, Object.assign({ h: 110, cap: "white", tip: tip || label }, o || {}))
+  };
+}
+function genSynth(d) {
+  const CW = 118, PX = 18, TOP = 42, BOT = 12, SG = 22, MX = 28, MY = 44, RG = 40;
+  const boxes = [], ctrls = []; let y = MY, maxR = 0;
+  d.rows.forEach(row => {
+    let x = MX, rowH = 0;
+    row.forEach(sec => {
+      const items = sec.c, cols = sec.cols || Math.min(items.length, 6), nr = Math.ceil(items.length / cols), rh = [];
+      for (let r = 0; r < nr; r++) rh.push(items.slice(r * cols, r * cols + cols).some(c => c && c.t === "sld") ? 172 : 150);
+      const w = cols * CW + 2 * PX, h = TOP + rh.reduce((a, b) => a + b, 0) + BOT;
+      boxes.push({ id: sec.t, title: sec.t, x, y, w, h });
+      items.forEach((c, i) => {
+        if (!c) return;
+        const r = Math.floor(i / cols), col = i % cols, top = y + TOP + rh.slice(0, r).reduce((a, b) => a + b, 0);
+        c.sec = sec.t; c.cx = x + PX + col * CW + CW / 2; c.cy = c.t === "sld" ? top + 26 + c.h / 2 : top + 54;
+        ctrls.push(c);
+      });
+      x += w + SG; rowH = Math.max(rowH, h);
+    });
+    maxR = Math.max(maxR, x - SG); y += rowH + RG;
+  });
+  const W = Math.max(760, maxR + MX), H = y - RG + MY;
+  const out = Object.assign({}, d, { gen: true, W, H, wood: 0, kind: "gen", boxes, ctrls, statics: [{ k: "st", x: W / 2, y: 12, text: d.name + ": drawn from the manual", dim: 1 }] });
+  delete out.rows; return out;
+}
+const NO_CAB = ["Not connected"];
+const ONOFFS = ["ON", "OFF"];
+const MM_SCALE = "Knob values are positions on a 0 to 10 scale (minimum to maximum, left to right) unless the label shows a range. Selectors with more than three positions are drawn as stepped dials. Layout follows the manual's sections, not the hardware's exact positions.";
+
+/* Behringer MODEL D (Behringer MODEL D Quick Start Guide / user manual, callouts 4 to 49) */
+const MD = (function () {
+  const h = gHelp(true), { k, b, r, p, s } = h;
+  const waveA = ["TRIANGLE", "TRI/SAW", "SAW", "SQUARE", "WIDE PULSE", "NARROW PULSE"], waveB = ["TRIANGLE", "REV SAW", "SAW", "SQUARE", "WIDE PULSE", "NARROW PULSE"];
+  const rng = ["LO", "32'", "16'", "8'", "4'", "2'"];
+  const mixOn = (id, nm) => s(id, nm + " on", ONOFFS, nm + " on or off in the mixer.", { name: nm + " on/off" });
+  return genSynth({
+    id: "modeld", name: "Behringer MODEL D",
+    note: "MODEL D has no patch memory. Every knob is a recipe value you set by hand. " + MM_SCALE + " The manual calls the second-widest pulse 'wide' in the specifications and 'medium' in the controls text.",
+    scaleNote: "MODEL D values are knob positions on the printed 0 to 10 scale, except Tune (-2 to +2), Cutoff (-4 to +4) and OSC 2 and 3 Tune (-7 to +7).",
+    rows: [
+      [
+        { t: "Controllers", cols: 5, c: [
+          r("tune", "Tune", -2, 2, "Master tune, -2 to +2 on the panel."), k("glide", "Glide", "Glide time, 0 to 10."), s("oscMod", "Osc mod", ONOFFS, "Oscillator modulation on or off."),
+          s("modA", "Mod src A", ["OSC 3", "FILTER EG"], "OSC3/FILTER EG switch: the source at the counter-clockwise end of MOD MIX."), k("modMix", "Mod mix", "Mix between source A and source B.", { nums: false, ends: ["A", "B"] }),
+          s("modB", "Mod src B", ["NOISE", "LFO"], "NOISE/LFO switch (noise, or an external modulation source, or the LFO): the source at the clockwise end of MOD MIX."), k("lfoRate", "LFO rate", "LFO rate, 0 to 10."),
+          s("lfoWave", "LFO wave", ["TRIANGLE", "SQUARE"], "LFO waveform: triangular or square."), k("modDepth", "Mod depth", "Modulation depth, 0 to 10.")] },
+        { t: "Oscillator 1", cols: 2, c: [p("o1Range", "Range", rng, "Oscillator 1 range: LO, 32', 16', 8', 4', 2'."), p("o1Wave", "Wave", waveA, "Oscillator 1 waveform: triangular, triangular/sawtooth, sawtooth, square, wide pulse, narrow pulse.")] },
+        { t: "Oscillator 2", cols: 3, c: [p("o2Range", "Range", rng, "Oscillator 2 range."), r("o2Tune", "Tune", -7, 7, "Oscillator 2 frequency adjustment, -7 to +7 (semitone guide on the panel)."), p("o2Wave", "Wave", waveA, "Oscillator 2 waveform.")] },
+        { t: "Oscillator 3", cols: 4, c: [p("o3Range", "Range", rng, "Oscillator 3 range."), r("o3Tune", "Tune", -7, 7, "Oscillator 3 frequency adjustment, -7 to +7."), p("o3Wave", "Wave", waveB, "Oscillator 3 waveform: triangular, reverse sawtooth, sawtooth, square, wide pulse, narrow pulse."), s("o3Ctl", "Osc 3 ctrl", ONOFFS, "OSC 3 CONTROL: ON follows the keyboard, OFF frees oscillator 3 as a modulation source.")] }
+      ],
+      [
+        { t: "Mixer", cols: 5, c: [
+          k("o1Vol", "Osc 1", "Oscillator 1 volume."), k("o2Vol", "Osc 2", "Oscillator 2 volume."), k("o3Vol", "Osc 3", "Oscillator 3 volume."), k("extVol", "Ext in", "External input volume."), k("noiseVol", "Noise", "Noise volume."),
+          mixOn("o1On", "Osc 1"), mixOn("o2On", "Osc 2"), mixOn("o3On", "Osc 3"), mixOn("extOn", "External input"), mixOn("noiseOn", "Noise"),
+          s("noiseCol", "Noise", ["WHITE", "PINK"], "White or pink noise.", { name: "Noise colour" })] },
+        { t: "Filter", cols: 4, c: [
+          r("cutoff", "Cutoff", -4, 4, "Cutoff frequency, -4 to +4 on the panel."), k("emph", "Emphasis", "Filter emphasis (resonance)."), k("contAmt", "Contour amt", "Amount of contour (filter envelope depth)."), s("fMode", "Mode", ["LOW-PASS", "HIGH-PASS"], "Filter mode."),
+          s("fMod", "Filter mod", ONOFFS, "Filter modulation on or off."), s("kbd1", "Kbd 1", ONOFFS, "Keyboard control 1: adds 1/3 of key tracking to the cutoff."), s("kbd2", "Kbd 2", ONOFFS, "Keyboard control 2: adds 2/3 of key tracking to the cutoff. Both on is the maximum.")] },
+        { t: "Filter contour", cols: 4, c: [k("fAtt", "Attack", "Filter attack, 1 ms to 10 s."), k("fDec", "Decay", "Filter decay, 4 ms to over 35 s."), k("fSus", "Sustain", "Filter sustain, 0 to 10."), s("fDecSw", "Decay", ONOFFS, "Filter decay switch.", { name: "Filter decay switch" })] }
+      ],
+      [
+        { t: "Loudness contour", cols: 4, c: [k("lAtt", "Attack", "Loudness attack, 1 ms to 10 s."), k("lDec", "Decay", "Loudness decay, 4 ms to over 35 s."), k("lSus", "Sustain", "Loudness sustain, 0 to 10."), s("lDecSw", "Decay", ONOFFS, "Loudness decay switch.", { name: "Loudness decay switch" })] },
+        { t: "Output", cols: 4, c: [s("a440", "A-440", ONOFFS, "A-440 reference tone on or off."), s("mainOn", "Main out", ONOFFS, "Main output on or off (mute)."), k("mainVol", "Main vol", "Main output volume."), k("phonesVol", "Phones", "Phones volume.")] }
+      ]
+    ],
+    cableSrc: ["Not connected", "LFO triangular out", "LFO square out", "Mix out", "Filter contour out", "Loudness contour out"],
+    cableDst: ["Not connected", "Mod source in", "Osc 1V/oct in", "LFO CV in", "Ext in", "Cutoff CV in", "Filter contour gate in", "Loudness contour gate in", "Loudness CV in"]
+  });
+})();
+
+/* Behringer POLY D (Behringer POLY D Quick Start Guide, callouts 1 to 57). Transpose (7) is not included: its type is not stated. */
+const PD = (function () {
+  const h = gHelp(true), { k, b, r, p, s } = h;
+  const waveA = ["TRIANGLE", "TRI/SAW", "SAW", "SQUARE", "MEDIUM PULSE", "NARROW PULSE"], waveB = ["TRIANGLE", "REV SAW", "SAW", "SQUARE", "MEDIUM PULSE", "NARROW PULSE"];
+  const rng = ["1", "2", "3", "4", "5", "6"];
+  const rtip = n => "Oscillator " + n + " range: six ranges. The manual does not list the labels, so they are counted 1 to 6 here; write the printed label in Notes.";
+  const mixOn = (id, nm) => s(id, nm + " on", ONOFFS, nm + " on or off in the mixer.", { name: nm + " on/off" });
+  const ftip = n => "Oscillator " + n + " frequency adjustment, marked in semitones on the panel; this book records the position from centre.";
+  return genSynth({
+    id: "polyd", name: "Behringer POLY D",
+    note: "POLY D has no patch memory (the manual lists a sequencer pattern store only). " + MM_SCALE + " Transpose is left out because the manual does not say how it works.",
+    scaleNote: "POLY D values are knob positions on a 0 to 10 scale; tune and frequency knobs are centre-based (-5 to +5).",
+    rows: [
+      [
+        { t: "Keyboard and controllers", cols: 5, c: [
+          k("modWheel", "Mod wheel", "Mod wheel position, off to maximum.", { nums: false }), s("glideSw", "Glide", ONOFFS, "GLIDE ON/OFF switch."), k("lfoRate", "LFO rate", "LFO frequency."), s("lfoWave", "LFO wave", ["TRIANGLE", "SQUARE"], "LFO wave shape."), k("glide", "Glide time", "Glide (portamento) amount."),
+          s("noiseLfo", "Mod src B", ["NOISE", "LFO"], "NOISE (MOD SRC)/LFO switch."), s("osc4Feg", "Mod src A", ["OSC 4", "FILTER EG"], "OSC4/FILTER EG switch."), k("modMix", "Mod mix", "Mix between the two modulation sources.", { nums: false, ends: ["A", "B"] }),
+          s("mode", "Mode", ["MONO", "UNISON", "POLY"], "MODE: monophonic, unison or polyphonic."), s("autoDamp", "Auto damp", ONOFFS, "AUTO DAMP on or off.")] },
+        { t: "Oscillator bank", cols: 2, c: [b("tune", "Tune", "Tunes oscillators 1 to 4. Marked in semitones; recorded from centre."), s("oscMod", "Osc mod", ONOFFS, "Oscillator modulation on or off.")] },
+        { t: "Oscillator 1", cols: 2, c: [p("o1Range", "Range", rng, rtip(1)), p("o1Wave", "Wave", waveA, "Oscillator 1 waveform: triangular, triangular/sawtooth, sawtooth, square, medium pulse, narrow pulse.")] },
+        { t: "Oscillator 2", cols: 3, c: [p("o2Range", "Range", rng, rtip(2)), b("o2Freq", "Frequency", ftip(2)), p("o2Wave", "Wave", waveA, "Oscillator 2 waveform.")] }
+      ],
+      [
+        { t: "Oscillator 3", cols: 3, c: [p("o3Range", "Range", rng, rtip(3)), b("o3Freq", "Frequency", ftip(3)), p("o3Wave", "Wave", waveA, "Oscillator 3 waveform.")] },
+        { t: "Oscillator 4", cols: 4, c: [p("o4Range", "Range", rng, rtip(4)), b("o4Freq", "Frequency", ftip(4)), p("o4Wave", "Wave", waveB, "Oscillator 4 waveform: triangular, reverse sawtooth, sawtooth, square, medium pulse, narrow pulse."), s("o4Ctl", "Osc 4 ctrl", ONOFFS, "OSC 4 CONTROL switch.")] },
+        { t: "Mixer", cols: 6, c: [
+          k("o1Vol", "Osc 1", "Oscillator 1 volume."), k("o2Vol", "Osc 2", "Oscillator 2 volume."), k("o3Vol", "Osc 3", "Oscillator 3 volume."), k("o4Vol", "Osc 4", "Oscillator 4 volume."), k("noiseVol", "Noise", "Noise volume."), k("extVol", "Ext in", "External input volume."),
+          mixOn("o1On", "Osc 1"), mixOn("o2On", "Osc 2"), mixOn("o3On", "Osc 3"), mixOn("o4On", "Osc 4"), mixOn("noiseOn", "Noise"), mixOn("extOn", "External input"),
+          s("noiseCol", "Noise", ["WHITE", "PINK"], "White or pink noise.", { name: "Noise colour" }), s("decay", "Decay", ONOFFS, "DECAY switch (contour decay)."), s("kbd1", "Kbd 1", ONOFFS, "Keyboard control 1. Both off: no tracking. Both on: maximum."), s("kbd2", "Kbd 2", ONOFFS, "Keyboard control 2.")] }
+      ],
+      [
+        { t: "Filter", cols: 5, c: [s("fMod", "Filter mod", ONOFFS, "Filter modulation on or off."), s("fMode", "Mode", ["LOWPASS", "HIGHPASS"], "Filter mode."), k("cutoff", "Cutoff", "Cutoff frequency."), k("emph", "Emphasis", "Filter emphasis (resonance)."), k("contAmt", "Contour amt", "Amount of contour (filter envelope depth).")] },
+        { t: "Filter envelope", cols: 3, c: [k("fAtt", "Attack", "Filter envelope attack."), k("fDec", "Decay", "Filter envelope decay time."), k("fSus", "Sustain", "Filter envelope sustain.")] },
+        { t: "Loudness contour", cols: 3, c: [k("lAtt", "Attack", "Loudness attack."), k("lDec", "Decay", "Loudness decay time (also release time when DECAY is on)."), k("lSus", "Sustain", "Loudness sustain.")] },
+        { t: "Chorus", cols: 3, c: [s("chOn", "Chorus", ONOFFS, "Chorus on or off."), s("ch1", "Chorus I", ONOFFS, "CHORUS I. The manual does not say what kind of switch it is; I and II can both be on."), s("ch2", "Chorus II", ONOFFS, "CHORUS II: a deeper chorus.")] }
+      ],
+      [
+        { t: "Distortion", cols: 4, c: [k("dist", "Distortion", "Distortion amount."), k("tone", "Tone", "Distortion tone."), k("level", "Level", "Distortion output level."), s("distOn", "Distortion", ONOFFS, "Distortion on or off.")] },
+        { t: "Sequencer", cols: 1, c: [k("tempo", "Tempo", "Tempo and gate length knob (sequencer and arpeggio tempo). Patterns are stored in the sequencer, not in this book.")] },
+        { t: "Output", cols: 2, c: [k("vol", "Volume", "Overall output level."), k("phones", "Phones", "Phones output level.")] }
+      ]
+    ],
+    cableSrc: ["Not connected", "After pressure out", "Pitch out", "V-trig out", "Velocity out", "Sync out"],
+    cableDst: ["Not connected", "Ext signal in", "Sync in", "Ext V-trigger in", "Loudness CV in", "Filter CV in", "Oscillator CV in", "Mod source in"]
+  });
+})();
+
+/* Moog Mother-32 (owner's manual). The manual does not state every mod-source switch position: UP = EG on VCO MOD SOURCE is the only one given. */
+const M32 = (function () {
+  const h = gHelp(false), { k, b, r, p, s } = h;
+  return genSynth({
+    id: "mother32", name: "Moog Mother-32",
+    note: "Mother-32 cannot save sounds (Moog support: it stores up to 64 sequences only). " + MM_SCALE + " The manual gives no positions for the mod source switches except UP = EG on VCO MOD SOURCE, so those two are drawn UP and DOWN: check which is which on your unit.",
+    scaleNote: "Mother-32 values are knob positions on a 0 to 10 scale (minimum to maximum).",
+    rows: [
+      [
+        { t: "VCO", cols: 3, c: [k("vcoFreq", "Frequency", "VCO frequency: about one octave up or down from centre.", { nums: false }), s("vcoWave", "Wave", ["SAW", "PULSE"], "VCO wave."), k("vcoPw", "Pulse width", "About 2% (fully counter-clockwise) to about 98% (fully clockwise); centre is a square wave.", { nums: false })] },
+        { t: "VCO modulation", cols: 3, c: [s("vcoModSrc", "Source", ["UP", "DOWN"], "VCO MOD SOURCE. The manual says UP is the EG; the LFO or external position is not stated.", { name: "VCO mod source" }), k("vcoModAmt", "Amount", "VCO modulation amount.", { nums: false, name: "VCO mod amount" }), s("vcoModDst", "Destination", ["FREQUENCY", "PULSE WIDTH"], "VCO modulation destination.", { name: "VCO mod destination" })] },
+        { t: "LFO", cols: 2, c: [k("lfoRate", "Rate", "LFO rate, about 0.1 Hz to 350 Hz.", { nums: false }), s("lfoWave", "Wave", ["TRIANGLE", "SQUARE"], "LFO wave.")] },
+        { t: "Mix", cols: 1, c: [k("mix", "Mix", "Counter-clockwise is the selected VCO waveform; clockwise is white noise or the EXT AUDIO input.", { nums: false, ends: ["VCO", "NOISE"] })] }
+      ],
+      [
+        { t: "VCF", cols: 3, c: [k("cutoff", "Cutoff", "Filter cutoff, 20 Hz to 20 kHz.", { nums: false }), k("res", "Resonance", "Resonance; above about 3 o'clock the filter self-oscillates.", { nums: false }), s("fMode", "Mode", ["LOW PASS", "HIGH PASS"], "VCF mode.")] },
+        { t: "VCF modulation", cols: 3, c: [s("fModSrc", "Source", ["UP", "DOWN"], "VCF MOD SOURCE: LFO or EG. The manual does not say which position is which.", { name: "VCF mod source" }), k("fModAmt", "Amount", "VCF modulation amount.", { nums: false, name: "VCF mod amount" }), s("fModPol", "Polarity", ["+", "-"], "VCF mod polarity.", { name: "VCF mod polarity" })] },
+        { t: "EG", cols: 3, c: [k("att", "Attack", "Envelope attack: left is faster, right is slower.", { nums: false }), k("dec", "Decay", "Envelope decay: left is faster, right is slower.", { nums: false }), s("sus", "Sustain", ONOFFS, "Sustain switch: ON holds the envelope at its maximum while a note is held.")] },
+        { t: "VCA", cols: 2, c: [s("vcaMode", "Mode", ["EG", "ON"], "VCA mode: EG follows the envelope, ON holds the VCA at maximum."), k("vol", "Volume", "Output volume.", { nums: false })] },
+        { t: "VC mix", cols: 1, c: [k("vcMix", "VC mix", "Continuous mix between MIX 1 (counter-clockwise) and MIX 2 (clockwise).", { nums: false, ends: ["MIX 1", "MIX 2"] })] },
+        { t: "Tempo and glide", cols: 2, c: [k("tempo", "Tempo", "Internal tempo, about 40 to 750 BPM (also sets gate length while programming steps).", { nums: false }), k("glide", "Glide", "Glide time.", { nums: false })] }
+      ]
+    ],
+    cableSrc: ["Not connected", "VCA output", "Noise output", "VCF output", "VCO saw output", "VCO pulse output", "LFO square output", "LFO triangle output", "VC mix output", "Mult 1 output", "Mult 2 output", "Assign output", "EG output", "KB output", "Gate output"],
+    cableDst: ["Not connected", "External audio in", "Mix CV in", "VCA CV in", "VCF cutoff in", "VCF resonance in", "VCO 1V/oct in", "VCO linear FM in", "VCO mod in", "LFO rate in", "Mix 1 in", "Mix 2 in", "VC mix control in", "Mult in", "Gate in", "Tempo in", "Run/stop in", "Reset in", "Hold in"]
+  });
+})();
+
+/* Moog DFAM (owner's manual) */
+const DF = (function () {
+  const h = gHelp(false), { k, b, r, p, s } = h;
+  const sq = (n, kind) => Array.from({ length: 8 }, (_, i) => kind === "p" ? b("p" + (i + 1), "Pitch " + (i + 1), "Step " + (i + 1) + " pitch: about 10 octaves (+/-5 V); centre is no offset.", { nums: false, ticks: [-5, 0, 5] }) : k("v" + (i + 1), "Velocity " + (i + 1), "Step " + (i + 1) + " velocity, 0 to 5 V; the minimum produces no sound.", { nums: false }));
+  return genSynth({
+    id: "dfam", name: "Moog DFAM",
+    note: "DFAM cannot save sounds. " + MM_SCALE + " Bipolar knobs run -5 to +5 with 0 at centre.",
+    scaleNote: "DFAM values are knob positions on a 0 to 10 scale, or -5 to +5 for centre-zero knobs.",
+    rows: [
+      [
+        { t: "VCO 1", cols: 3, c: [k("v1Freq", "Frequency", "VCO 1 frequency: ten-octave range.", { nums: false }), s("v1Wave", "Wave", ["TRIANGLE", "SQUARE"], "VCO 1 wave."), b("v1Eg", "EG amount", "VCO 1 EG amount: centre is none.", { nums: false })] },
+        { t: "VCO 2", cols: 5, c: [k("v2Freq", "Frequency", "VCO 2 frequency: ten-octave range.", { nums: false }), s("v2Wave", "Wave", ["TRIANGLE", "SQUARE"], "VCO 2 wave."), b("v2Eg", "EG amount", "VCO 2 EG amount: centre is none.", { nums: false }), s("sync", "Hard sync", ONOFFS, "Hard sync."), k("fm", "1 to 2 FM", "VCO 1 to VCO 2 FM amount.", { nums: false })] },
+        { t: "VCO envelope", cols: 1, c: [k("vcoDec", "Decay", "VCO decay (shared by both VCOs).", { nums: false })] },
+        { t: "Mixer", cols: 3, c: [k("m1", "VCO 1", "VCO 1 level.", { nums: false }), k("m2", "VCO 2", "VCO 2 level.", { nums: false }), k("mn", "Noise/Ext", "Noise or external audio level.", { nums: false })] }
+      ],
+      [
+        { t: "VCF", cols: 6, c: [s("fMode", "Mode", ["LP", "HP"], "VCF mode: low pass or high pass."), k("cutoff", "Cutoff", "Cutoff, 20 Hz to 20 kHz.", { nums: false }), k("res", "Resonance", "Resonance.", { nums: false }), k("fDec", "Decay", "VCF decay, 10 ms to 10 s.", { nums: false }), b("fEg", "EG amount", "VCF EG amount: centre is none.", { nums: false }), k("fNoise", "Noise/VCF mod", "Noise / VCF mod amount.", { nums: false })] },
+        { t: "VCA", cols: 3, c: [s("vcaEg", "VCA EG", ["FAST", "SLOW"], "VCA EG attack: FAST is 1 ms, SLOW is 100 ms."), k("vcaDec", "Decay", "VCA decay.", { nums: false }), k("vol", "Volume", "Output volume.", { nums: false })] },
+        { t: "Sequencer", cols: 2, c: [s("seqMod", "Pitch mod", ["VCO 1 & 2", "OFF", "VCO 2"], "SEQ PITCH MOD: which oscillators the sequencer pitch moves."), k("tempo", "Tempo", "Tempo, 0.7 Hz to 700 Hz.", { nums: false })] }
+      ],
+      [{ t: "Sequencer pitch", cols: 8, c: sq(8, "p") }],
+      [{ t: "Sequencer velocity", cols: 8, c: sq(8, "v") }]
+    ],
+    cableSrc: ["Not connected", "VCA out", "VCA EG out", "VCF EG out", "VCO EG out", "VCO 1 out", "VCO 2 out", "Trigger out", "Velocity out", "Pitch out"],
+    cableDst: ["Not connected", "Trigger in", "VCA CV in", "Velocity in", "VCA decay in", "Ext audio in", "VCF decay in", "Noise level in", "VCO decay in", "VCF mod in", "VCO 1 CV in", "1 to 2 FM amount in", "VCO 2 CV in", "Tempo in", "Run/stop in", "Advance/clock in"]
+  });
+})();
+
+/* Moog Subharmonicon (owner's manual) */
+const SH = (function () {
+  const h = gHelp(false), { k, b, r, p, s } = h;
+  const div = Array.from({ length: 16 }, (_, i) => String(16 - i));
+  const w3 = ["SQR", "SQR/SAW", "SAW"], wtip = n => "VCO " + n + " waveform: UP is square, MIDDLE is a square VCO with sawtooth subs, DOWN is sawtooth.";
+  const step = (n, i) => b("s" + n + "_" + i, "Step " + i, "Sequencer " + n + " step " + i + ": centre is no change, right raises and left lowers the pitch (range set by SEQ OCT).", { nums: false, ticks: [-5, 0, 5] });
+  const asg = (id, label, nm) => s(id, label, ONOFFS, nm, { name: nm });
+  return genSynth({
+    id: "subharmonicon", name: "Moog Subharmonicon",
+    note: "Subharmonicon cannot save sounds. " + MM_SCALE + " Divider knobs (sub frequency and rhythm) are integer steps, shown as the number printed at that position (16 at fully counter-clockwise, 1 at fully clockwise).",
+    scaleNote: "Subharmonicon dividers are integers 1 to 16; other knobs are positions on a 0 to 10 scale, or -5 to +5 for centre-zero knobs.",
+    rows: [
+      [
+        { t: "VCO 1", cols: 4, c: [k("v1Freq", "Frequency", "VCO 1 frequency: four octaves, middle C (262 Hz) fully counter-clockwise to the highest C (4186 Hz) fully clockwise.", { nums: false, ends: ["C4", "C8"] }), p("v1Sub1", "Sub 1", div, "SUB 1 divider (VCO 1), 1 to 16."), p("v1Sub2", "Sub 2", div, "SUB 2 divider (VCO 1), 1 to 16."), s("v1Wave", "Wave", w3, wtip(1))] },
+        { t: "VCO 2", cols: 4, c: [k("v2Freq", "Frequency", "VCO 2 frequency: four octaves, middle C (262 Hz) to the highest C (4186 Hz).", { nums: false, ends: ["C4", "C8"] }), p("v2Sub1", "Sub 1", div, "SUB 1 divider (VCO 2), 1 to 16."), p("v2Sub2", "Sub 2", div, "SUB 2 divider (VCO 2), 1 to 16."), s("v2Wave", "Wave", w3, wtip(2))] },
+        { t: "Mixer", cols: 6, c: [k("l1", "VCO 1", "VCO 1 level.", { nums: false }), k("l1s1", "Sub 1", "SUB 1 (VCO 1) level.", { nums: false, name: "VCO 1 sub 1 level" }), k("l1s2", "Sub 2", "SUB 2 (VCO 1) level.", { nums: false, name: "VCO 1 sub 2 level" }), k("l2", "VCO 2", "VCO 2 level.", { nums: false }), k("l2s1", "Sub 1", "SUB 1 (VCO 2) level.", { nums: false, name: "VCO 2 sub 1 level" }), k("l2s2", "Sub 2", "SUB 2 (VCO 2) level.", { nums: false, name: "VCO 2 sub 2 level" })] }
+      ],
+      [
+        { t: "Filter", cols: 2, c: [k("cutoff", "Cutoff", "Cutoff, 20 Hz to 20 kHz.", { nums: false }), k("res", "Resonance", "Resonance.", { nums: false })] },
+        { t: "VCA", cols: 1, c: [k("vol", "Volume", "Output volume.", { nums: false })] },
+        { t: "Envelopes", cols: 6, c: [k("fAtt", "VCF attack", "VCF attack, 1 ms to 10 s.", { nums: false }), k("fDec", "VCF decay", "VCF decay, 5 ms to 10 s.", { nums: false }), b("fAmt", "VCF EG amt", "VCF EG amount: centre is no effect.", { nums: false }), k("aAtt", "VCA attack", "VCA attack, 1 ms to 10 s.", { nums: false }), k("aDec", "VCA decay", "VCA decay, 5 ms to 10 s.", { nums: false }), s("eg", "EG", ["OFF", "ON", "HELD"], "EG button: off, on or held (blinking).")] },
+        { t: "Tempo and tuning", cols: 3, c: [k("tempo", "Tempo", "Tempo, 0.333 Hz to 50 Hz (20 to 3000 BPM).", { nums: false }), p("quant", "Quantize", ["12-ET", "8-ET", "12-JI", "8-JI", "OFF"], "QUANTIZE button cycles 12-ET, 8-ET, 12-JI, 8-JI, then off."), p("seqOct", "Seq oct", ["+/-5", "+/-2", "+/-1"], "SEQ OCT (both sequencers): +/-5, +/-2 or +/-1 octaves.")] }
+      ],
+      [
+        { t: "Sequencer 1", cols: 4, c: [step(1, 1), step(1, 2), step(1, 3), step(1, 4), asg("a1o", "Osc 1", "Sequencer 1 controls VCO 1 pitch"), asg("a1s1", "Sub 1", "Sequencer 1 controls SUB 1 (VCO 1)"), asg("a1s2", "Sub 2", "Sequencer 1 controls SUB 2 (VCO 1)")] },
+        { t: "Sequencer 2", cols: 4, c: [step(2, 1), step(2, 2), step(2, 3), step(2, 4), asg("a2o", "Osc 2", "Sequencer 2 controls VCO 2 pitch"), asg("a2s1", "Sub 1", "Sequencer 2 controls SUB 1 (VCO 2)"), asg("a2s2", "Sub 2", "Sequencer 2 controls SUB 2 (VCO 2)")] },
+        { t: "Rhythm generators", cols: 4, c: [1, 2, 3, 4].map(n => p("r" + n, "Rhythm " + n, div, "Rhythm " + n + " divider, 1 to 16.")).concat([1, 2, 3, 4].map(n => asg("r" + n + "s1", "Seq 1", "Rhythm " + n + " drives sequencer 1"))).concat([1, 2, 3, 4].map(n => asg("r" + n + "s2", "Seq 2", "Rhythm " + n + " drives sequencer 2")))}
+      ]
+    ],
+    cableSrc: ["Not connected", "VCA out", "VCO 1 out", "VCO 1 sub 1 out", "VCO 1 sub 2 out", "VCA EG out", "VCO 2 out", "VCO 2 sub 1 out", "VCO 2 sub 2 out", "VCF EG out", "Seq 1 out", "Seq 1 clock out", "Seq 2 out", "Seq 2 clock out", "Clock out", "Trigger out"],
+    cableDst: ["Not connected", "VCO 1 in", "VCO 1 sub in", "VCO 1 PWM in", "VCA in", "VCO 2 in", "VCO 2 sub in", "VCO 2 PWM in", "Cutoff in", "Play in", "Reset in", "Trigger in", "Rhythm 1 in", "Rhythm 2 in", "Rhythm 3 in", "Rhythm 4 in", "Clock in"]
+  });
+})();
+
+/* Moog Grandmother (owner's manual). Selectors with 4 positions are drawn as stepped dials. */
+const GM = (function () {
+  const h = gHelp(false), { k, b, r, p, s, l } = h;
+  const w4 = ["TRIANGLE", "SAW", "SQUARE", "NARROW PULSE"];
+  return genSynth({
+    id: "grandmother", name: "Moog Grandmother",
+    note: "Grandmother cannot save sounds. " + MM_SCALE + " Pitch and mod wheels are left out (the pitch bend range is a global setting).",
+    scaleNote: "Grandmother values are knob positions on a 0 to 10 scale; Osc 2 frequency is -7 to +7 semitones.",
+    rows: [
+      [
+        { t: "Left-hand", cols: 1, c: [k("glide", "Glide", "Glide: minimum is no glide.", { nums: false })] },
+        { t: "Oscillator 1", cols: 3, c: [p("o1Oct", "Octave", ["32'", "16'", "8'", "4'"], "Oscillator 1 octave: 32', 16', 8', 4'."), s("sync", "Sync", ONOFFS, "SYNC: hard-syncs oscillator 2 to oscillator 1."), p("o1Wave", "Wave", w4, "Oscillator 1 waveform: triangle, saw, square, narrow pulse.")] },
+        { t: "Oscillator 2", cols: 3, c: [p("o2Oct", "Octave", ["16'", "8'", "4'", "2'"], "Oscillator 2 octave: 16', 8', 4', 2'."), r("o2Freq", "Frequency", -7, 7, "Oscillator 2 frequency, +/-7 semitones (centre is unison)."), p("o2Wave", "Wave", w4, "Oscillator 2 waveform.")] },
+        { t: "Mixer", cols: 3, c: [k("m1", "Osc 1", "Oscillator 1 level.", { nums: false }), k("m2", "Osc 2", "Oscillator 2 level.", { nums: false }), k("mn", "Noise", "White noise level.", { nums: false })] }
+      ],
+      [
+        { t: "Filter", cols: 4, c: [k("cutoff", "Cutoff", "Cutoff, 10 Hz to 20 kHz.", { nums: false }), k("res", "Resonance", "Resonance.", { nums: false }), b("envAmt", "Env amount", "Envelope amount: centre is none.", { nums: false }), s("kbd", "Kbd track", ["OFF", "1:2", "1:1"], "Keyboard tracking: OFF, 1:2 or 1:1.")] },
+        { t: "Envelope", cols: 4, c: [k("att", "Attack", "Attack.", { nums: false }), k("dec", "Decay", "Decay.", { nums: false }), l("sus", "Sustain", "Sustain slider."), k("rel", "Release", "Release.", { nums: false })] },
+        { t: "Output", cols: 3, c: [k("vol", "Volume", "Volume.", { nums: false }), s("vcaMode", "VCA mode", ["ENV", "KB RLS", "DRONE"], "VCA mode: ENV, KB RLS or DRONE."), k("rev", "Reverb mix", "Spring reverb mix: dry at minimum, wet at maximum.", { nums: false, ends: ["DRY", "WET"] })] }
+      ],
+      [
+        { t: "Modulation", cols: 5, c: [k("lfoRate", "Rate", "LFO rate, 0.07 Hz to 1.3 kHz.", { nums: false }), p("lfoWave", "Wave", ["SINE", "SAW", "RAMP", "SQUARE"], "LFO waveform: sine, sawtooth, ramp, square."), k("pitchAmt", "Pitch amt", "Maximum pitch modulation depth.", { nums: false }), k("cutAmt", "Cutoff amt", "Maximum filter modulation depth.", { nums: false }), k("pwAmt", "PW amt", "Maximum pulse width modulation depth.", { nums: false })] },
+        { t: "Utilities", cols: 2, c: [k("hp", "High pass", "Static high-pass filter cutoff (6 dB/oct).", { nums: false }), b("atten", "Attenuator", "Attenuator: centre is zero output, clockwise restores normal, counter-clockwise restores inverted.", { nums: false })] },
+        { t: "Arp / Seq", cols: 4, c: [k("arpRate", "Rate", "Rate, 20 to 280 BPM.", { nums: false }), s("arpMode", "Mode", ["ARP", "SEQ", "REC"], "Mode: arpeggiator, sequencer or record."), s("arpDir", "Direction", ["ORDR", "FWD/BKWD", "RNDM"], "Arpeggiator direction: order, forward/backward, random."), s("arpOct", "Oct / seq", ["1", "2", "3"], "Octave range in ARP mode, or the sequence number in SEQ and REC mode.")] }
+      ]
+    ],
+    cableSrc: ["Not connected", "Gate out", "KB out", "KB velocity out", "Mod wave out", "Mod S/H out", "Osc 1 wave out", "Osc 2 wave out", "Mixer out", "High pass out", "Attenuator out", "Filter out", "+ Env out", "- Env out", "Mult (any of 4)"],
+    cableDst: ["Not connected", "Mod rate in", "Mod sync in", "Osc 1 pitch in", "Osc 1 PWM in", "Osc 2 pitch in", "Osc 2 linear FM in", "Mixer osc 1 in", "Mixer osc 2 in", "Mixer noise in", "High pass in", "Attenuator in", "Filter in", "Filter env amount in", "Filter cutoff in", "Envelope trigger in", "VCA amount in", "VCA in", "Reverb in", "Mult (any of 4)"]
+  });
+})();
+
+/* Minimoog Model D (2016 reissue owner's manual). Patch panel list is limited to what the overview names; check jack names on your unit. */
+const MM = (function () {
+  const h = gHelp(false), { k, b, r, p, s } = h;
+  const waveA = ["TRIANGLE", "TRI/SAW", "SAW", "SQUARE", "WIDE PULSE", "NARROW PULSE"], waveB = ["TRIANGLE", "REV SAW", "SAW", "SQUARE", "WIDE PULSE", "NARROW PULSE"], rng = ["LO", "32'", "16'", "8'", "4'", "2'"];
+  const mixOn = (id, nm) => s(id, nm + " on", ONOFFS, nm + " on or off in the mixer.", { name: nm + " on/off" });
+  return genSynth({
+    id: "minimoog", name: "Moog Minimoog Model D",
+    note: "Minimoog Model D (reissue) has no sound memory. " + MM_SCALE + " Range labels: the manual prints LO, 32', 16', 8' and 2'; 4' is implied by the six settings.",
+    scaleNote: "Minimoog values are knob positions on a 0 to 10 scale (minimum to maximum).",
+    rows: [
+      [
+        { t: "Controllers", cols: 5, c: [k("tune", "Tune", "Master tuning of oscillator 1.", { nums: false }), k("glide", "Glide", "Glide time, 1 ms to 10 s per octave.", { nums: false }), s("modA", "Mod src A", ["OSC 3", "FILTER EG"], "OSC. 3 / FILTER EG rocker: the source at the counter-clockwise end of the mix."), s("modB", "Mod src B", ["NOISE", "LFO"], "NOISE / LFO rocker: the source at the clockwise end of the mix."), k("modMix", "Mod mix", "Balances the two sources: counter-clockwise is the first only, centre is both, clockwise is the second only.", { nums: false, ends: ["A", "B"] }), s("oscMod", "Osc mod", ONOFFS, "Oscillator modulation on or off.")] },
+        { t: "Oscillator 1", cols: 2, c: [p("o1Range", "Range", rng, "Oscillator 1 range: LO, 32', 16', 8', 4', 2'."), p("o1Wave", "Wave", waveA, "Oscillator 1 waveform: triangle, triangle/sawtooth, sawtooth, pulse 1 (square), pulse 2 (wide), pulse 3 (narrow).")] },
+        { t: "Oscillator 2", cols: 3, c: [p("o2Range", "Range", rng, "Oscillator 2 range."), k("o2Freq", "Frequency", "Oscillator 2 detune from oscillator 1.", { nums: false }), p("o2Wave", "Wave", waveA, "Oscillator 2 waveform.")] },
+        { t: "Oscillator 3", cols: 4, c: [p("o3Range", "Range", rng, "Oscillator 3 range."), k("o3Freq", "Frequency", "Oscillator 3 detune from oscillator 1.", { nums: false }), p("o3Wave", "Wave", waveB, "Oscillator 3 waveform: triangle, reverse sawtooth, sawtooth, pulse 1, 2, 3."), s("o3Ctl", "Osc 3 ctrl", ONOFFS, "OSC. 3 CONTROL: ON follows the keyboard, OFF frees oscillator 3 as a modulation source.")] }
+      ],
+      [
+        { t: "Mixer", cols: 5, c: [k("o1Vol", "Osc 1", "Oscillator 1 volume.", { nums: false }), k("o2Vol", "Osc 2", "Oscillator 2 volume.", { nums: false }), k("o3Vol", "Osc 3", "Oscillator 3 volume.", { nums: false }), k("extVol", "Ext in", "External input volume.", { nums: false }), k("noiseVol", "Noise", "Noise volume.", { nums: false }), mixOn("o1On", "Osc 1"), mixOn("o2On", "Osc 2"), mixOn("o3On", "Osc 3"), mixOn("extOn", "External input"), mixOn("noiseOn", "Noise"), s("noiseCol", "Noise", ["WHITE", "PINK"], "White or pink noise.", { name: "Noise colour" })] },
+        { t: "Filter", cols: 3, c: [k("cutoff", "Cutoff", "Cutoff frequency, 10 Hz to 20 kHz (the manual also says 32 kHz in one place).", { nums: false }), k("emph", "Emphasis", "Emphasis (resonance).", { nums: false }), s("fMod", "Filter mod", ONOFFS, "Filter modulation on or off."), s("kbd1", "Kbd 1", ONOFFS, "Keyboard control 1: 1/3 key tracking."), s("kbd2", "Kbd 2", ONOFFS, "Keyboard control 2: 2/3 key tracking.")] },
+        { t: "Filter contour", cols: 4, c: [k("fAtt", "Attack", "Filter attack, 1 ms to 10 s.", { nums: false }), k("fDec", "Decay", "Filter decay, 4 ms to over 35 s.", { nums: false }), k("fSus", "Sustain", "Filter sustain.", { nums: false }), k("contAmt", "Contour amt", "Amount of contour, 0 to 4 octaves.", { nums: false })] }
+      ],
+      [
+        { t: "Loudness contour", cols: 3, c: [k("lAtt", "Attack", "Loudness attack, 1 ms to 10 s.", { nums: false }), k("lDec", "Decay", "Loudness decay, 4 ms to over 35 s.", { nums: false }), k("lSus", "Sustain", "Loudness sustain.", { nums: false })] },
+        { t: "Left-hand panel", cols: 5, c: [k("lfoRate", "LFO rate", "LFO rate, 0.05 Hz to 200 Hz.", { nums: false }), s("lfoWave", "LFO wave", ["TRIANGLE", "SQUARE"], "LFO waveform: triangle with the knob pushed down, square with the knob pulled up."), k("modWheel", "Mod wheel", "Mod wheel position: zero is fully down.", { nums: false }), s("glideSw", "Glide", ONOFFS, "Glide on or off."), s("decaySw", "Decay", ONOFFS, "DECAY switch: extends the contour decay after release.")] },
+        { t: "Output", cols: 4, c: [k("mainVol", "Main vol", "Main output volume (the manual suggests 6 or below for the most usable overdrive).", { nums: false }), s("mainOn", "Main out", ONOFFS, "Main output on or off (mute)."), s("a440", "A-440", ONOFFS, "A-440 reference tone."), k("phonesVol", "Phones", "Phones volume.", { nums: false })] }
+      ]
+    ],
+    cableSrc: ["Not connected", "Velocity", "After pressure"],
+    cableDst: ["Not connected", "V-trigger/gate in", "Oscillator CV in", "Filter CV in", "Loudness CV in"]
+  });
+})();
+
+/* Arturia MicroBrute (user's manual). The manual's two chapters disagree on the LFO shapes. */
+const MB = (function () {
+  const h = gHelp(false), { k, b, r, p, s, l } = h;
+  return genSynth({
+    id: "microbrute", name: "Arturia MicroBrute",
+    note: "MicroBrute cannot save sounds (patterns are stored, sounds are not). " + MM_SCALE + " The manual does not describe a noise knob or a front-panel envelope retrigger control. The LFO shape switch is listed as square, sawtooth, triangle in one chapter and as sine/triangle, sawtooth, square in another: check your unit. Mod matrix defaults: ENV is wired to Metal and LFO to Pitch until a cable is patched.",
+    scaleNote: "MicroBrute values are knob and slider positions on a 0 to 10 scale (minimum to maximum).",
+    rows: [
+      [
+        { t: "Oscillator", cols: 4, c: [k("saw", "Saw", "Saw level.", { nums: false }), k("sqr", "Square", "Square level.", { nums: false }), k("tri", "Triangle", "Triangle level.", { nums: false }), k("overtone", "Overtone", "Overtone level.", { nums: false }), k("ultra", "Ultrasaw", "Ultrasaw: counter-clockwise is the plain saw.", { nums: false }), k("pw", "Pulse width", "Pulse width: 50% fully counter-clockwise, up to 90% clockwise.", { nums: false }), k("metal", "Metalizer", "Metalizer: counter-clockwise is a smooth triangle, clockwise a metallic, warped wave.", { nums: false }), k("subFifth", "Sub > Fifth", "SUB>FIFTH blends an octave-down tone and a fifth-up tone.", { nums: false })] },
+        { t: "Filter", cols: 3, c: [s("fMode", "Mode", ["LP", "BP", "HP"], "Filter mode: low pass, band pass, high pass."), k("cutoff", "Cutoff", "Cutoff, below 20 Hz to about 18 kHz.", { nums: false }), k("res", "Resonance", "Resonance: self-oscillates in the last quarter of travel.", { nums: false }), k("brute", "Brute factor", "Brute Factor: counter-clockwise is off, higher adds distortion.", { nums: false }), b("envAmt", "Env amount", "Envelope amount for the filter: counter-clockwise inverted, centre none, clockwise positive.", { nums: false }), k("kbd", "Kbd tracking", "Keyboard tracking: counter-clockwise none, about 12 o'clock even tracking.", { nums: false })] },
+        { t: "LFO", cols: 4, c: [s("lfoWave", "Wave", ["SQUARE", "SAW", "TRI"], "LFO wave select. See the panel note: the manual lists the shapes two different ways."), k("lfoAmt", "Amount", "LFO amount.", { nums: false }), k("lfoRate", "Rate", "LFO rate, about 0.1 Hz to 200 Hz when free-running.", { nums: false }), s("lfoSync", "Sync", ["FREE", "SEQ"], "LFO sync: FREE or SEQ.")] }
+      ],
+      [
+        { t: "Envelope", cols: 4, c: [l("att", "Attack", "Attack, about 2.5 ms to 2.5 s."), l("dec", "Decay", "Decay, about 2.5 ms to 2.5 s."), l("sus", "Sustain", "Sustain level."), l("rel", "Release", "Release, about 5 ms to 5 s."), k("envOut", "Env amount", "Attenuates the envelope sent to the mod matrix destinations.", { nums: false }), s("vca", "VCA", ["GATE", "ENV"], "VCA: GATE or ENV.")] },
+        { t: "Performance", cols: 3, c: [k("glide", "Glide", "Glide: counter-clockwise none, up to about 4 s for two octaves.", { nums: false }), s("modSw", "Mod wheel to", ["CUTOFF", "LFO AMT"], "Mod wheel destination: cutoff or LFO amount."), k("vol", "Master vol", "Master volume.", { nums: false })] }
+      ]
+    ],
+    cableSrc: ["Not connected", "ENV out", "LFO out"],
+    cableDst: ["Not connected", "Metal in", "Saw (Ultrasaw rate) in", "Sub (Overtone) in", "Pitch in", "Filter in", "PWM in"]
+  });
+})();
+
+/* Korg volca bass (owner's manual). Several settings are reached with FUNC plus a step key; they are drawn as switches. */
+const VB = (function () {
+  const h = gHelp(false), { k, b, r, p, s } = h;
+  const w = n => s("w" + n, "VCO " + n + " wave", ["SAW", "SQUARE"], "VCO " + n + " waveform, set with FUNC + STEP " + (7 + n) + ": LED off is sawtooth, LED on is square.", { name: "VCO " + n + " wave" });
+  const tgt = (id, label, step, nm) => s(id, label, ONOFFS, "LFO to " + nm + ": FUNC + STEP " + step + ", LED lit is on.", { name: "LFO to " + nm });
+  return genSynth({
+    id: "volcabass", name: "Korg volca bass",
+    note: "volca bass stores eight sequence patterns but not sounds. " + MM_SCALE + " Settings reached with FUNC + a step key are drawn as switches; the step number is in the info bubble. Slide is set per step and is not in this book. The manual has no Expression control in its English section.",
+    scaleNote: "volca bass values are knob positions on a 0 to 10 scale; Pitch 1 to 3 are centre-based (+/-1 octave).",
+    rows: [
+      [
+        { t: "VCO", cols: 4, c: [k("octave", "Octave", "Sets the octave of the keyboard notes.", { nums: false }), b("pitch1", "Pitch 1", "VCO 1 pitch, +/-1 octave.", { nums: false }), b("pitch2", "Pitch 2", "VCO 2 pitch, +/-1 octave.", { nums: false }), b("pitch3", "Pitch 3", "VCO 3 pitch, +/-1 octave.", { nums: false }), w(1), w(2), w(3)] },
+        { t: "Filter", cols: 3, c: [k("cutoff", "Cutoff", "Cutoff: left darkens, right brightens.", { nums: false }), k("peak", "Peak", "Peak (resonance): more to the right, more emphasis.", { nums: false }), k("cutEg", "Cutoff EG int", "How much the EG moves the cutoff.", { nums: false })] },
+        { t: "EG", cols: 4, c: [k("attack", "Attack", "EG attack.", { nums: false }), k("decay", "Decay/release", "EG decay and release.", { nums: false }), s("sustain", "Sustain", ONOFFS, "SUSTAIN ON: FUNC + STEP 11, LED lit enables EG sustain."), s("egAmp", "EG to amp", ONOFFS, "EG to amp: FUNC + STEP 12, LED lit lets the EG control the volume.")] }
+      ],
+      [
+        { t: "LFO", cols: 6, c: [k("lfoRate", "Rate", "LFO rate.", { nums: false }), k("lfoInt", "Int", "LFO depth.", { nums: false }), s("lfoWave", "Wave", ["TRIANGLE", "SQUARE"], "LFO waveform, FUNC + STEP 7: LED off is triangle, LED on is square."), tgt("lfoAmp", "To amp", 4, "amp"), tgt("lfoPitch", "To pitch", 5, "pitch"), tgt("lfoCut", "To cutoff", 6, "cutoff")] },
+        { t: "Master", cols: 2, c: [k("vol", "Volume", "Output volume.", { nums: false }), k("tempo", "Tempo", "Sequencer tempo.", { nums: false })] }
+      ]
+    ],
+    cableSrc: NO_CAB, cableDst: NO_CAB
+  });
+})();
+
+/* Korg volca keys (owner's manual) */
+const VK = (function () {
+  const h = gHelp(false), { k, b, r, p, s } = h;
+  return genSynth({
+    id: "volcakeys", name: "Korg volca keys",
+    note: "volca keys stores sequence patterns but not sounds. " + MM_SCALE + " The LFO shape and trigger sync are set with FUNC + a key; the manual does not say which key, so they are drawn as switches. The manual has no separate VCO EG control: the VCO-section EG INT is the pitch EG.",
+    scaleNote: "volca keys values are knob positions on a 0 to 10 scale (minimum to maximum).",
+    rows: [
+      [
+        { t: "VCO", cols: 5, c: [k("octave", "Octave", "Sets the octave of the keyboard notes.", { nums: false }), p("voice", "Voice", ["POLY", "UNISON", "OCTAVE", "FIFTH", "UNISON RING", "POLY RING"], "Voice mode: poly, unison, octave, fifth, unison ring, poly ring."), k("detune", "Detune", "Pitch offset for VCO 1 to 3.", { nums: false }), k("porta", "Portamento", "Portamento time.", { nums: false }), k("pitchEg", "Pitch EG int", "How much the EG changes the pitch (EG INT in the VCO section).", { nums: false })] },
+        { t: "VCF", cols: 3, c: [k("cutoff", "Cutoff", "Cutoff frequency.", { nums: false }), k("peak", "Peak", "Peak (resonance).", { nums: false }), k("cutEg", "Cutoff EG int", "How much the EG changes the cutoff.", { nums: false })] },
+        { t: "EG", cols: 3, c: [k("attack", "Attack", "EG attack.", { nums: false }), k("decay", "Decay/release", "EG decay and release.", { nums: false }), k("sustain", "Sustain", "EG sustain.", { nums: false })] }
+      ],
+      [
+        { t: "LFO", cols: 5, c: [k("lfoRate", "Rate", "LFO rate.", { nums: false }), k("lfoPitch", "Pitch int", "LFO depth on the pitch.", { nums: false }), k("lfoCut", "Cutoff int", "LFO depth on the cutoff.", { nums: false }), s("lfoWave", "Wave", ["SAW", "TRI", "SQR"], "LFO waveform (FUNC + a key): saw, triangle or square."), s("lfoSync", "Trigger sync", ONOFFS, "Trigger sync (FUNC + a key): resets the LFO phase on each note.")] },
+        { t: "Delay", cols: 2, c: [k("delayTime", "Time", "Delay time.", { nums: false }), k("delayFb", "Feedback", "Delay feedback and effect/dry mix.", { nums: false })] },
+        { t: "Master", cols: 2, c: [k("vol", "Volume", "Output volume.", { nums: false }), k("tempo", "Tempo", "Sequencer tempo.", { nums: false })] }
+      ]
+    ],
+    cableSrc: NO_CAB, cableDst: NO_CAB
+  });
+})();
+
+const SYNTHS = [PRO1, CAT, TD3MO, TD3, MD, PD, M32, DF, SH, GM, MM, MB, VB, VK];
 const DEF_SYNTH = (document.documentElement.dataset.synth || "pro1");
 const synthById = id => SYNTHS.find(s => s.id === id) || PRO1;
 const controlsOf = syn => syn.ctrls;
@@ -630,10 +984,10 @@ function dragWire(target, c, getV, setV, pxPerRange) {
   target.addEventListener("pointerdown", e => { target.setPointerCapture(e.pointerId); y0 = e.clientY; v0 = getV(); hideTip(); });
   target.addEventListener("pointermove", e => { if (y0 == null) return; setV(v0 + (y0 - e.clientY) / (pxPerRange() * scale) * (c.max - c.min) * (e.shiftKey ? .25 : 1)); });
   const end = () => { y0 = null; }; target.addEventListener("pointerup", end); target.addEventListener("pointercancel", end);
-  target.addEventListener("wheel", e => { e.preventDefault(); setV(getV() + (e.deltaY < 0 ? 1 : -1) * (e.shiftKey ? 1 : .1)); }, { passive: false });
+  target.addEventListener("wheel", e => { e.preventDefault(); setV(getV() + (e.deltaY < 0 ? 1 : -1) * (c.step >= 1 ? c.step : (e.shiftKey ? 1 : .1))); }, { passive: false });
   target.addEventListener("dblclick", () => setV(c.def));
   target.addEventListener("keydown", e => {
-    const st = e.shiftKey ? 1 : .1;
+    const st = c.step >= 1 ? c.step : (e.shiftKey ? 1 : .1);
     if (e.key === "ArrowUp" || e.key === "ArrowRight") { e.preventDefault(); setV(getV() + st); }
     else if (e.key === "ArrowDown" || e.key === "ArrowLeft") { e.preventDefault(); setV(getV() - st); }
     else if (e.key === "Home") { e.preventDefault(); setV(c.min); } else if (e.key === "End") { e.preventDefault(); setV(c.max); }
@@ -793,7 +1147,7 @@ function renderList() {
   });
 }
 function renderCables() {
-  const syn = synthById(cur.synth), box = $("#cables"); box.innerHTML = ""; cur.cables = cur.cables || [];
+  const syn = synthById(cur.synth), box = $("#cables"); box.innerHTML = ""; cur.cables = cur.cables || []; $("#cablesCard").hidden = syn.cableSrc.length < 2; if (syn.cableSrc.length < 2) return;
   for (let i = 0; i < 9; i++) {
     const row = el("div", "cable"), c = cur.cables[i] || (cur.cables[i] = { from: 0, to: 0 });
     const mk = (list, val, set) => { const s = el("select"); list.forEach((t, j) => { const o = el("option"); o.value = j; o.textContent = t; s.appendChild(o); }); s.value = Math.min(val || 0, list.length - 1); s.onchange = () => { set(+s.value); refreshMeta(); }; s.setAttribute("aria-label", "cable " + (i + 1)); return s; };
@@ -805,6 +1159,7 @@ function sheetText() {
   L.push(cur.name + "  |  " + syn.name + "  |  " + cur.category + (cur.author ? "  |  by " + cur.author : ""));
   L.push("Saved " + (cur.updated || today()) + ". (est) = read from a photo, about +/-1; (?) = low confidence; (unset) = not known.");
   if (syn.id === "cat") L.push("CAT values are positions on a 0-10 scale (bottom to top for sliders, min to max for knobs).");
+  if (syn.scaleNote) L.push(syn.scaleNote);
   L.push("");
   const order = []; syn.ctrls.forEach(c => { if (!order.includes(c.sec)) order.push(c.sec); });
   order.forEach(sec => {
@@ -834,6 +1189,7 @@ function renderAll() {
   const syn = synthById(cur.synth); db.settings.synth = syn.id;
   renderSynthSel(); renderList();
   $("#presetName").value = cur.name; $("#author").value = cur.author || ""; $("#category").value = cur.category || "Other"; $("#notes").value = cur.notes || "";
+  { const sn = $("#synNote"), sy = synthById(cur.synth); sn.hidden = !sy.gen; sn.textContent = sy.gen ? sy.note : ""; }
   renderPanel(); renderSeq(); renderCables(); refreshMeta();
   $("#delBtn").textContent = "Delete"; delArmed = false; $("#scParam").textContent = syn.id === "cat" ? "move a slider or knob" : "move a knob";
   $("#shelf").hidden = !db.settings.shelf; $("#shelfOn").checked = db.settings.shelf;

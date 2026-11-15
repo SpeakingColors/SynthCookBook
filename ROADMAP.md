@@ -12,3 +12,5 @@
 - [ ] Send global settings by SysEx (note priority, pitch bend range, clock out) after capture check
 - [x] Export and import recipe files (recipe book format; the v1 patch format stays for the simple page)
 - [ ] Plugin and standalone builds on cat-ui
+- [x] Ten more panels drawn from the manuals: Behringer MODEL D and POLY D, Moog Mother-32, DFAM, Subharmonicon, Grandmother, Minimoog Model D, Arturia MicroBrute, Korg volca bass and keys
+- [ ] Check the ten manual-based panels against the real hardware (switch positions, range labels) and redraw them from photos
